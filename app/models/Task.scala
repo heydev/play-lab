@@ -1,15 +1,16 @@
 package models
 
 import org.joda.time.DateTime
+import reactivemongo.bson._
+import play.modules.reactivemongo.json.BSONFormats._
 
 /**
  * Models a Task.
- * @param id The unique id of the object.
  * @param user The user the task belongs to.
  * @param description A description of the task.
  * @param dueDate An optional date when the task must be completed by.
  */
-case class Task (id: String,
+case class Task (id: Option[BSONObjectID],
                  user: String,
                  description: String,
                  dueDate: Option[DateTime])
@@ -22,15 +23,15 @@ object Task {
   import play.api.libs.json._
   import play.api.libs.functional.syntax._
 
-  implicit val reads: Reads[Task] = (
-    (__ \ "id").read[String] and
+  implicit val jsonReads: Reads[Task] = (
+    (__ \ "id").readNullable[BSONObjectID] and
     (__ \ "user").read[String] and
     (__ \ "description").read[String] and
     (__ \ "dueDate").readNullable[DateTime]
   )(Task.apply _)
 
-  implicit val writes: Writes[Task] = (
-    (__ \ "id").write[String] and
+  implicit val jsonWrites: Writes[Task] = (
+    (__ \ "id").writeNullable[BSONObjectID] and
     (__ \ "user").write[String] and
     (__ \ "description").write[String] and
     (__ \ "dueDate").writeNullable[DateTime]
