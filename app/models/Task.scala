@@ -24,7 +24,7 @@ object Task {
   import play.api.libs.functional.syntax._
 
   implicit val jsonReads: Reads[Task] = (
-    (__ \ "id").readNullable[BSONObjectID] and
+    (__ \ "id").readNullable[BSONObjectID].map(_.getOrElse(BSONObjectID.generate)).map(Some(_)) and
     (__ \ "user").read[String] and
     (__ \ "description").read[String] and
     (__ \ "dueDate").readNullable[DateTime]

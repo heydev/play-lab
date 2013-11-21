@@ -16,23 +16,29 @@ import play.modules.reactivemongo.json.collection.JSONCollection
 
 object TaskApi extends Controller with MongoController {
 
-  def collection: JSONCollection = db.collection[JSONCollection]("tasks")
+  def collection = db.collection[JSONCollection]("tasks")
 
-  /**
-   * Validates and returns the Task provided, or displays errors.
-   * @return
-   */
-  def postTask = Action(parse.json) { request =>
-    request.body.validate[Task].map{
+  def postTask = Action.async(parse.json) { request =>
+    request.body.validate[Task].map {
       case task => {
         val futureResult = collection.insert(task)
-        Async {
-          // when the insert is performed, send a OK 200 result
-          futureResult.map(_ => Ok)
+        futureResult.map {
+          case t => t.inError match {
+            case true => InternalServerError("%s".format(t))
+            case false => Ok(Json.toJson(task))
+          }
         }
       }
     }.recoverTotal{
-      e => BadRequest("Detected error:"+ JsError.toFlatJson(e))
+      e => Future { BadRequest(JsError.toFlatJson(e)) }
+    }
+  }
+
+  def getTasks(user: String) = Action.async(parse.anyContent) { request =>
+    val cursor = collection.find(Json.obj("user" -> user)).cursor[Task]
+    val futureResults: Future[List[Task]] = cursor.collect[List]()
+    futureResults.map {
+      case t => Ok(Json.toJson(t))
     }
   }
 }
