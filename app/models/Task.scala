@@ -2,10 +2,10 @@ package models
 
 import org.joda.time.DateTime
 import reactivemongo.bson._
-import play.modules.reactivemongo.json.BSONFormats._
 
 /**
  * Models a Task.
+ * @param id The unique identifier for this task.
  * @param user The user the task belongs to.
  * @param description A description of the task.
  * @param dueDate An optional date when the task must be completed by.
@@ -22,6 +22,7 @@ object Task {
   // import just JSON Reads/Writes helpers in scope
   import play.api.libs.json._
   import play.api.libs.functional.syntax._
+  import play.modules.reactivemongo.json.BSONFormats._
 
   implicit val jsonReads: Reads[Task] = (
     (__ \ "id").readNullable[BSONObjectID].map(_.getOrElse(BSONObjectID.generate)).map(Some(_)) and
